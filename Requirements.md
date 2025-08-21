@@ -115,7 +115,3 @@ Attractive styling: Use a design system like Material Design or Tailwind CSS.
 | Audio playback           | ✅ Yes            |
 | User authentication      | ✅ Yes            |
 | History of generations   | ✅ Yes            |
-
----
-
-Would you like me to generate the **project structure and starter code** for both Angular and FastAPI? Or start with the backend setup for Coqui TTS first?

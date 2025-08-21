@@ -1,0 +1,75 @@
+<div class="flex justify-center items-center h-screen bg-gray-100">
+  <mat-card class="w-full max-w-md p-8 rounded-lg shadow-lg">
+    <mat-card-header class="text-center">
+      <mat-card-title class="text-3xl font-bold text-gray-800">Sign Up</mat-card-title>
+    </mat-card-header>
+
+    @if (errorMessage()) {
+      <mat-card-content class="mb-4">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">
+          {{ errorMessage() }}
+        </div>
+      </mat-card-content>
+    }
+
+    <mat-card-content class="mt-6">
+      <form [formGroup]="signupForm" (ngSubmit)="onSubmit()" class="flex flex-col space-y-4">
+        <mat-form-field appearance="outline">
+          <mat-label>Username</mat-label>
+          <input matInput formControlName="username" placeholder="Enter your username">
+          
+          @if (signupForm.controls['username'].hasError('required') && signupForm.controls['username'].touched) {
+            <mat-error>Username is required</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" placeholder="Enter your email">
+          
+          @if (signupForm.controls['email'].hasError('required') && signupForm.controls['email'].touched) {
+            <mat-error>Email is required</mat-error>
+          }
+          @if (signupForm.controls['email'].hasError('email') && signupForm.controls['email'].touched) {
+            <mat-error>Please enter a valid email address</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" placeholder="Enter your password">
+          
+          @if (signupForm.controls['password'].hasError('required') && signupForm.controls['password'].touched) {
+            <mat-error>Password is required</mat-error>
+          }
+          @if (signupForm.controls['password'].hasError('minlength') && signupForm.controls['password'].touched) {
+            <mat-error>Password must be at least 6 characters</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-raised-button
+          color="primary"
+          class="w-full py-3 text-lg"
+          [disabled]="signupForm.invalid || isLoading()"
+        >
+          @if (isLoading()) {
+            <span class="flex items-center justify-center">
+              <span class="animate-spin">⏳</span>
+              <span class="ml-2">Processing...</span>
+            </span>
+          } @else {
+            <span>Sign Up</span>
+          }
+        </button>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions class="mt-4 text-center">
+      <p class="text-gray-600">
+        Already have an account?
+        <a routerLink="/login" class="text-blue-500 hover:underline">Login</a>
+      </p>
+    </mat-card-actions>
+  </mat-card>
+</div>

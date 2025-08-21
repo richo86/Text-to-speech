@@ -1,0 +1,63 @@
+<div class="flex justify-center items-center h-screen bg-gray-100">
+  <mat-card class="w-full max-w-md p-8 rounded-lg shadow-lg">
+    <mat-card-header class="text-center">
+      <mat-card-title class="text-3xl font-bold text-gray-800">Login</mat-card-title>
+    </mat-card-header>
+    
+    @if (errorMessage()) {
+      <mat-card-content class="mb-4">
+        <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded" role="alert">
+          {{ errorMessage() }}
+        </div>
+      </mat-card-content>
+    }
+
+    <mat-card-content class="mt-6">
+      <form [formGroup]="loginForm" (ngSubmit)="onSubmit()" class="flex flex-col space-y-4">
+        <mat-form-field appearance="outline">
+          <mat-label>Email</mat-label>
+          <input matInput formControlName="email" placeholder="Enter your email">
+          
+          @if (loginForm.controls['email'].hasError('required') && loginForm.controls['email'].touched) {
+            <mat-error>Email is required.</mat-error>
+          }
+          @if (loginForm.controls.email.hasError('email') && loginForm.controls.email.touched) {
+            <mat-error>Please enter a valid email address.</mat-error>
+          }
+        </mat-form-field>
+
+        <mat-form-field appearance="outline">
+          <mat-label>Password</mat-label>
+          <input matInput type="password" formControlName="password" placeholder="Enter your password">
+          
+          @if (loginForm.controls.password.hasError('required') && loginForm.controls.password.touched) {
+            <mat-error>Password is required.</mat-error>
+          }
+        </mat-form-field>
+
+        <button
+          mat-raised-button
+          color="primary"
+          class="w-full py-3 text-lg"
+          [disabled]="loginForm.invalid || isLoading()"
+        >
+          @if (isLoading()) {
+            <span class="flex items-center justify-center">
+              <span class="animate-spin">⏳</span>
+              <span class="ml-2">Processing...</span>
+            </span>
+          } @else {
+            <span>Login</span>
+          }
+        </button>
+      </form>
+    </mat-card-content>
+
+    <mat-card-actions class="mt-4 text-center">
+      <p class="text-gray-600">
+        Don't have an account?
+        <a routerLink="/signup" class="text-blue-500 hover:underline">Sign up</a>
+      </p>
+    </mat-card-actions>
+  </mat-card>
+</div>

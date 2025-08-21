@@ -1,0 +1,8 @@
+<mat-toolbar color="primary">
+  <span>ELC Application</span>
+  <span class="flex-auto"></span>
+  
+  @if (authService.isAuthenticated()) {
+    <button mat-button (click)="logout()">Logout</button>
+  }
+</mat-toolbar>
