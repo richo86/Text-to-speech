@@ -1,8 +1,12 @@
 <mat-toolbar color="primary">
-  <span>ELC Application</span>
-  <span class="flex-auto"></span>
+  <a routerLink="/dashboard/main" class="font-bold text-lg mr-8 p-8">ELC</a>
   
+  <a mat-button routerLink="/dashboard/main">Home</a>
+  <span class="flex-auto"></span>
   @if (authService.isAuthenticated()) {
     <button mat-button (click)="logout()">Logout</button>
+  } @else {
+    <a mat-button routerLink="/">Login</a>
+    <a mat-button routerLink="/signup">Sign Up</a>
   }
 </mat-toolbar>

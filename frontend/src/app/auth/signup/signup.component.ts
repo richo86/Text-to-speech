@@ -5,6 +5,7 @@ import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
 import { Router, RouterLink } from '@angular/router';
 import { Auth } from '../auth.service';
+import { User } from '../../user/user.model';
 
 @Component({
   selector: 'app-signup',
@@ -40,14 +41,11 @@ export class Signup {
     this.errorMessage.set(null);
 
     try {
-      const success = await this.authService.signup(
-        this.signupForm.value.username!,
-        this.signupForm.value.email!,
-        this.signupForm.value.password!
-      );
+      const user: User = this.signupForm.getRawValue();
+      const success = await this.authService.signup(user);
 
       if (success) {
-        await this.router.navigate(['/login']);
+        await this.router.navigate(['/dashboard/main']);
       } else {
         this.errorMessage.set('Signup failed. Please try again.');
       }

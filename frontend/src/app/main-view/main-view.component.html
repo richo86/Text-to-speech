@@ -1,0 +1,33 @@
+<div class="main-container">
+  <div class="top-container">
+    <div class="section">
+      <h2>Upload a File</h2>
+      <div class="file-upload-container">
+        <label for="fileUpload" class="visually-hidden">Choose file to upload</label>
+        <input id="fileUpload" type="file" (change)="onFileSelected($event)" #fileUpload>
+        <button class="upload-button" (click)="fileUpload.click()">Choose File</button>
+        @if (fileName) {
+          <span class="file-name">{{ fileName }}</span>
+        } @else {
+          <span class="file-name">No file chosen</span>
+        }
+      </div>
+    </div>
+
+    <div class="section">
+      <h2>Record Your Voice</h2>
+      <div class="voice-recorder-container">
+        <button class="record-button">Start Recording</button>
+        <div class="sound-wave"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="section tts-section">
+    <h2>Text-to-Speech</h2>
+    <div class="tts-container">
+      <textarea class="text-area" placeholder="Enter text to listen..."></textarea>
+      <button class="listen-button">Listen</button>
+    </div>
+  </div>
+</div>

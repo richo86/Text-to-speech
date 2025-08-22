@@ -10,6 +10,7 @@ import { MatButtonModule } from '@angular/material/button';
 import { RouterLink, Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { Auth } from '../auth.service';
+import { LoginUser } from '../../user/user.model';
 
 @Component({
   selector: 'app-login',
@@ -31,13 +32,13 @@ export class LoginComponent {
   private readonly authService = inject(Auth);
   private readonly router = inject(Router);
 
-  protected readonly loginForm = this.fb.nonNullable.group({
-    email: this.fb.nonNullable.control('', [Validators.required, Validators.email]),
+  public readonly loginForm = this.fb.nonNullable.group({
+    username: this.fb.nonNullable.control('', Validators.required),
     password: this.fb.nonNullable.control('', Validators.required)
   });
 
-  protected readonly isLoading = signal(false);
-  protected readonly errorMessage = signal<string | null>(null);
+  public readonly isLoading = signal(false);
+  public readonly errorMessage = signal<string | null>(null);
 
   async onSubmit(): Promise<void> {
     if (this.loginForm.invalid) {
@@ -48,10 +49,10 @@ export class LoginComponent {
     this.errorMessage.set(null);
 
     try {
-      const { email, password } = this.loginForm.getRawValue();
-      const success = await this.authService.login(email, password);
+      const user: LoginUser = this.loginForm.getRawValue();
+      const success = await this.authService.login(user);
       if (success) {
-        await this.router.navigate(['/']);
+        await this.router.navigate(['/dashboard/main']);
       } else {
         this.errorMessage.set('Invalid email or password');
       }
