@@ -1,18 +1,25 @@
+import { Auth } from '../auth.service';
+import { ActivatedRoute } from '@angular/router';
+import { FormBuilder } from '@angular/forms';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
-import { Login } from './login.component';
+import { LoginComponent } from './login.component';
 
 describe('Login', () => {
-  let component: Login;
-  let fixture: ComponentFixture<Login>;
+  let component: LoginComponent;
+  let fixture: ComponentFixture<LoginComponent>;
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
-      imports: [Login]
+      imports: [LoginComponent],
+      providers: [
+        { provide: Auth, useValue: { login: () => Promise.resolve(true) } },
+        { provide: ActivatedRoute, useValue: {} },
+        FormBuilder
+      ]
     })
     .compileComponents();
 
-    fixture = TestBed.createComponent(Login);
+    fixture = TestBed.createComponent(LoginComponent);
     component = fixture.componentInstance;
     fixture.detectChanges();
   });

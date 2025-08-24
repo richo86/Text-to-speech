@@ -6,7 +6,7 @@ describe('MainViewComponent', () => {
 
   beforeEach(() => {
     TestBed.configureTestingModule({
-  imports: [MainViewComponent]
+      imports: [MainViewComponent]
     });
     const fixture = TestBed.createComponent(MainViewComponent);
     component = fixture.componentInstance;
@@ -31,4 +31,13 @@ describe('MainViewComponent', () => {
 
     expect(fixture.componentInstance.fileName).toBe('test.txt');
   });
+
+  it('should call onFileSelected on file input change', () => {
+    const fixture = TestBed.createComponent(MainViewComponent);
+    spyOn(fixture.componentInstance, 'onFileSelected');
+    const inputElement = fixture.nativeElement.querySelector('input[type="file"]');
+    inputElement.dispatchEvent(new Event('change'));
+    expect(fixture.componentInstance.onFileSelected).toHaveBeenCalled();
+  });
+
 });

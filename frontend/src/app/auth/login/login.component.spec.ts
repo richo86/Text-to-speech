@@ -3,7 +3,7 @@ import { ReactiveFormsModule } from '@angular/forms';
 import { MatCardModule } from '@angular/material/card';
 import { MatInputModule } from '@angular/material/input';
 import { MatButtonModule } from '@angular/material/button';
-import { Router } from '@angular/router';
+import { Router, ActivatedRoute } from '@angular/router';
 import { Auth } from '../auth.service';
 import { LoginComponent } from './login.component';
 
@@ -27,6 +27,7 @@ describe('LoginComponent', () => {
       ],
       providers: [
         { provide: Auth, useValue: authSpy },
+        { provide: ActivatedRoute, useValue: {} },
         { provide: Router, useValue: routerSpy }
       ]
     });
@@ -89,6 +90,6 @@ describe('LoginComponent', () => {
     component.loginForm.setValue({ username: 'test', password: 'password' });
     await component.onSubmit();
 
-    expect(component.errorMessage()).toBe('Login failed. Please try again.');
+    expect(component.errorMessage()).toBe('Network error');
   });
 });

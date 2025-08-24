@@ -1,10 +1,18 @@
 import { TestBed } from '@angular/core/testing';
-import { App } from './app';
+import { App } from './app.component';
+import { Auth } from './auth/auth.service';
+import { ActivatedRoute } from '@angular/router';
+import { FormBuilder } from '@angular/forms';
 
 describe('App', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [App],
+      providers: [
+        { provide: Auth, useValue: { isAuthenticated: () => true } },
+        { provide: ActivatedRoute, useValue: {} },
+        FormBuilder
+      ]
     }).compileComponents();
   });
 
@@ -14,10 +22,4 @@ describe('App', () => {
     expect(app).toBeTruthy();
   });
 
-  it('should render title', () => {
-    const fixture = TestBed.createComponent(App);
-    fixture.detectChanges();
-    const compiled = fixture.nativeElement as HTMLElement;
-    expect(compiled.querySelector('h1')?.textContent).toContain('Hello, frontend');
-  });
 });

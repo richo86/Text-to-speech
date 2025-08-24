@@ -6,6 +6,8 @@ import { MatButtonModule } from '@angular/material/button';
 import { Router } from '@angular/router';
 import { Auth } from '../auth.service';
 import { Signup } from './signup.component';
+import { ActivatedRoute } from '@angular/router';
+import { HttpClient } from '@angular/common/http';
 
 describe('Signup', () => {
   let component: Signup;
@@ -23,7 +25,9 @@ describe('Signup', () => {
       imports: [Signup, ReactiveFormsModule, MatCardModule, MatInputModule, MatButtonModule],
       providers: [
         { provide: Auth, useValue: authSpy },
-        { provide: Router, useValue: routerSpy }
+        { provide: Router, useValue: routerSpy },
+        { provide: ActivatedRoute, useValue: {} },
+        { provide: HttpClient, useValue: { post: jasmine.createSpy('post') } }
       ]
     });
     const fixture = TestBed.createComponent(Signup);
