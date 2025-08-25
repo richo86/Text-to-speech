@@ -1,33 +1,54 @@
-<div class="main-container">
-  <div class="top-container">
-    <div class="section">
-      <h2>Upload a File</h2>
-      <div class="file-upload-container">
-        <label for="fileUpload" class="visually-hidden">Choose file to upload</label>
-        <input id="fileUpload" type="file" (change)="onFileSelected($event)" #fileUpload>
-        <button class="upload-button" (click)="fileUpload.click()">Choose File</button>
-        @if (fileName) {
-          <span class="file-name">{{ fileName }}</span>
-        } @else {
-          <span class="file-name">No file chosen</span>
-        }
-      </div>
-    </div>
-
-    <div class="section">
-      <h2>Record Your Voice</h2>
-      <div class="voice-recorder-container">
-        <button class="record-button">Start Recording</button>
-        <div class="sound-wave"></div>
-      </div>
-    </div>
+<div class="container font-sans">
+  <div class="instructions">
+    <h2 class="text-4xl mb-5">How it works</h2>
+    <p>1. Upload an audio file or record your voice.</p>
+    <p>2. Type the text you want to hear in your own voice.</p>
+    <p>3. Click the "Read it for me" button.</p>
   </div>
 
-  <div class="section tts-section">
-    <h2>Text-to-Speech</h2>
-    <div class="tts-container">
-      <textarea class="text-area" placeholder="Enter text to listen..."></textarea>
-      <button class="listen-button">Listen</button>
+  <div class="content mt-8">
+    <mat-card class="card flex-1 flex-row items-center pt-10 pb-10" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title class="pt-5 pb-7">Upload your voice</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <div class="file-upload">
+          <button mat-stroked-button color="primary" (click)="fileInput.click()">
+            <mat-icon>attach_file</mat-icon>
+            Choose file
+          </button>
+          <input hidden (change)="onFileSelected($event)" #fileInput type="file" accept="audio/*">
+          @if (fileName) {
+            <span class="file-name">{{ fileName }}</span>
+          }
+        </div>
+      </mat-card-content>
+    </mat-card>
+
+    <div class="divider">
+      <mat-divider vertical></mat-divider>
+      <span>OR</span>
+      <mat-divider vertical></mat-divider>
     </div>
+
+    <mat-card class="card flex-1 flex-row items-center pt-10 pb-10" appearance="outlined">
+      <mat-card-header>
+        <mat-card-title class="pt-5 pb-7">Record your voice</mat-card-title>
+      </mat-card-header>
+      <mat-card-content>
+        <button mat-stroked-button color="primary" (click)="onRecord()">
+          <mat-icon>mic</mat-icon>
+          Record
+        </button>
+      </mat-card-content>
+    </mat-card>
+  </div>
+
+  <div class="text-to-speech">
+    <h2 class="text-xl mb-5 mt-10">Text to Speech</h2>
+    <mat-form-field class="full-width">
+      <textarea matInput placeholder="Type here..." ></textarea>
+    </mat-form-field>
+    <button mat-raised-button color="primary" [disabled]="!isAudioAvailable">Read it for me</button>
   </div>
 </div>
