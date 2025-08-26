@@ -1,11 +1,13 @@
 from datetime import datetime, timedelta, timezone
 from typing import Optional
-from fastapi import Depends, FastAPI, HTTPException
+from fastapi import Depends, FastAPI, HTTPException, UploadFile, File
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
 from jose import JWTError, jwt
 from passlib.context import CryptContext
 from src.models.user import User, UserInDB, LoginUser
+import shutil
+import os
 
 # Configuration
 SECRET_KEY = "your-secret-key"  # Change this in a real application
@@ -130,3 +132,20 @@ async def read_user(username: str):
 @app.get("/")
 def read_root():
     return {"Hello": "World"}
+
+@app.post("/upload")
+async def upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
+    try:
+        uploads_dir = os.path.join(os.getcwd() + '/backend/', "uploads")
+        os.makedirs(uploads_dir, exist_ok=True)
+
+        file_extension = file.filename.split(".")[-1]
+        file_name = f"{current_user.username}.{file_extension}"
+
+        file_path = os.path.join(uploads_dir, file_name)
+
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+        return {"message": "File uploaded successfully", "file_path": file_path}
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))

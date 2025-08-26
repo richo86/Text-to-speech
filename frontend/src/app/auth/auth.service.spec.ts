@@ -13,7 +13,7 @@ describe('Auth Service', () => {
   const tokenKey = 'authToken';
 
   beforeEach(() => {
-    localStorage.clear();
+    sessionStorage.clear();
     httpClientMock = { post: jasmine.createSpy('post') };
     TestBed.configureTestingModule({
       providers: [
@@ -38,7 +38,7 @@ describe('Auth Service', () => {
       const refreshedService = TestBed.runInInjectionContext(() => TestBed.inject(Auth));
       expect(result).toBe(true);
       expect(refreshedService.token()).toBe(testToken);
-      expect(localStorage.getItem(tokenKey)).toBe(testToken);
+      expect(sessionStorage.getItem(tokenKey)).toBe(testToken);
     });
 
     it('should handle signup errors', async () => {
@@ -48,7 +48,7 @@ describe('Auth Service', () => {
   const result = await service.signup(testUser);
   expect(result).toBe(false);
   expect(service.token()).toBeNull();
-  expect(localStorage.getItem(tokenKey)).toBeNull();
+  expect(sessionStorage.getItem(tokenKey)).toBeNull();
     });
 
     it('should reject weak passwords', async () => {
@@ -70,7 +70,7 @@ describe('Auth Service', () => {
       const refreshedService = TestBed.runInInjectionContext(() => TestBed.inject(Auth));
       expect(result).toBe(true);
       expect(refreshedService.token()).toBe(testToken);
-      expect(localStorage.getItem(tokenKey)).toBe(testToken);
+      expect(sessionStorage.getItem(tokenKey)).toBe(testToken);
     });
 
         it('should reject invalid credentials', async () => {
@@ -87,14 +87,14 @@ describe('Auth Service', () => {
     it('should clear token and navigate to login', () => {
       service.logout();
       expect(service.token()).toBeNull();
-      expect(localStorage.getItem(tokenKey)).toBeNull();
+      expect(sessionStorage.getItem(tokenKey)).toBeNull();
       expect(TestBed.inject(Router).navigate).toHaveBeenCalledWith(['/login']);
     });
   });
 
   describe('token persistence', () => {
-    it('should load token from localStorage on init', () => {
-      localStorage.setItem(tokenKey, testToken);
+    it('should load token from sessionStorage on init', () => {
+      sessionStorage.setItem(tokenKey, testToken);
       TestBed.resetTestingModule();
       TestBed.configureTestingModule({
         providers: [

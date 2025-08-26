@@ -1,26 +1,23 @@
 <div class="container font-sans">
   <div class="instructions">
     <h2 class="text-4xl mb-5">How it works</h2>
-    <p>1. Upload an audio file or record your voice.</p>
+    <p>1. Upload an audio file or record your voice (minimum of 10 seconds).</p>
     <p>2. Type the text you want to hear in your own voice.</p>
     <p>3. Click the "Read it for me" button.</p>
   </div>
 
   <div class="content mt-8">
-    <mat-card class="card flex-1 flex-row items-center pt-10 pb-10" appearance="outlined">
+    <mat-card class="card flex-1 flex-row items-center pt-[70px] pb-[70px]" appearance="outlined">
       <mat-card-header>
-        <mat-card-title class="pt-5 pb-7">Upload your voice</mat-card-title>
+        <mat-card-title class="pt-5 pb-5">Upload your voice</mat-card-title>
       </mat-card-header>
       <mat-card-content>
-        <div class="file-upload">
+        <div class="file-upload flex flex-col">
           <button mat-stroked-button color="primary" (click)="fileInput.click()">
             <mat-icon>attach_file</mat-icon>
             Choose file
           </button>
           <input hidden (change)="onFileSelected($event)" #fileInput type="file" accept="audio/*">
-          @if (fileName) {
-            <span class="file-name">{{ fileName }}</span>
-          }
         </div>
       </mat-card-content>
     </mat-card>
@@ -31,18 +28,52 @@
       <mat-divider vertical></mat-divider>
     </div>
 
-    <mat-card class="card flex-1 flex-row items-center pt-10 pb-10" appearance="outlined">
+    <mat-card class="card flex-1 flex-row items-center pt-[70px] pb-[70px]" appearance="outlined">
       <mat-card-header>
-        <mat-card-title class="pt-5 pb-7">Record your voice</mat-card-title>
+        <mat-card-title class="pb-5">Record your voice</mat-card-title>
       </mat-card-header>
-      <mat-card-content>
-        <button mat-stroked-button color="primary" (click)="onRecord()">
-          <mat-icon>mic</mat-icon>
-          Record
-        </button>
+      <mat-card-content class="flex-1 flex-row items-center">
+        @if(!isRecordingFinished()){
+          @if(isDelaying()){
+            <mat-spinner diameter="20"></mat-spinner>
+          }
+          @else {
+            <button mat-stroked-button color="primary" (click)="onRecord()" [disabled]="isStopDisabled()">
+            <mat-icon>{{ recording() ? 'stop' : 'mic' }}</mat-icon>
+            {{ recording() ? 'Stop Recording' : 'Record' }}
+          </button>
+          }
+          @if(recording()){
+            <p class="ml-5 text-red-600 pt-5 pl-7">Recording...</p>
+          }
+        } @else {
+          <div class="flex flex-col items-center gap-4">
+            <audio [src]="recordedUrl()" controls></audio>
+            <div class="flex gap-2">
+              <button mat-stroked-button color="primary" (click)="onUpload()">
+                <mat-icon>cloud_upload</mat-icon>
+                Upload
+              </button>
+              <button mat-stroked-button color="warn" (click)="onDiscard()">
+                <mat-icon>delete</mat-icon>
+                Discard
+              </button>
+            </div>
+          </div>
+        }
       </mat-card-content>
     </mat-card>
   </div>
+
+  @if(fileName != null && !isAudioAvailable){
+    <div class="file mt-10">
+      <p class="text-blue-700">File ready to upload: {{ fileName }}</p>
+    </div>
+  }@else if(isAudioAvailable){
+    <div class="file mt-10">
+      <p class="text-blue-700">File has been uploaded</p>
+    </div>
+  }
 
   <div class="text-to-speech">
     <h2 class="text-xl mb-5 mt-10">Text to Speech</h2>

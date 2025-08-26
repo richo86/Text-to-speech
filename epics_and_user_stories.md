@@ -67,7 +67,7 @@ This document outlines the epics and user stories for the application based on t
 
 **User Stories:**
 
-*   **As a user,** I want to be able to enter a piece of text that I want to be synthesized into speech.
+*   **As a user,** I want to be able to enter a piece of text that I want to be synthesized into speech using Coqui TTS.
     *   **Acceptance Criteria:**
         *   Given a user is on the synthesis page, there is a text area where they can input text.
         *   The text input should have a reasonable character limit.

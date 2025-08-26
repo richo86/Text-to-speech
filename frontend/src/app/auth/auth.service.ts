@@ -11,7 +11,7 @@ export class Auth {
   private readonly tokenKey = 'authToken';
   private readonly apiUrl = 'http://localhost:8000';
 
-  readonly token = signal<string | null>(localStorage.getItem(this.tokenKey));
+  readonly token = signal<string | null>(sessionStorage.getItem(this.tokenKey));
   readonly isAuthenticated = this.token.asReadonly();
 
   async signup(user: User): Promise<boolean> {
@@ -23,7 +23,8 @@ export class Auth {
 
       if (response?.token) {
         this.token.set(response.token);
-        localStorage.setItem(this.tokenKey, response.token);
+        this.setToken(response.token);
+        this.setUser(user.username);
         return true;
       }
       return false;
@@ -44,7 +45,8 @@ export class Auth {
 
       if (response?.token) {
         this.token.set(response.token);
-        localStorage.setItem(this.tokenKey, response.token);
+        this.setToken(response.token);
+        this.setUser(user.username);
         return true;
       }
       return false;
@@ -56,7 +58,27 @@ export class Auth {
 
   logout(): void {
     this.token.set(null);
-    localStorage.removeItem(this.tokenKey);
+    sessionStorage.removeItem(this.tokenKey);
     this.router.navigate(['/login']);
+  }
+
+  getToken(): string | null {
+    return sessionStorage.getItem(this.tokenKey);
+  }
+
+  setToken(token: string): void {
+    sessionStorage.setItem(this.tokenKey, token);
+  }
+
+  removeToken(): void {
+    sessionStorage.removeItem(this.tokenKey);
+  }
+
+  setUser(username: string): void {
+    sessionStorage.setItem('username', username);
+  }
+
+  getUser(): string | null {
+    return sessionStorage.getItem('username');
   }
 }
