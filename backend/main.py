@@ -3,11 +3,15 @@ from typing import Optional
 from fastapi import Depends, FastAPI, HTTPException, UploadFile, File
 from fastapi.security import OAuth2PasswordBearer
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import FileResponse
 from jose import JWTError, jwt
 from passlib.context import CryptContext
+from pydantic import BaseModel
 from src.models.user import User, UserInDB, LoginUser
 import shutil
 import os
+from TTS.api import TTS
+import soundfile as sf
 
 # Configuration
 SECRET_KEY = "your-secret-key"  # Change this in a real application
@@ -33,6 +37,9 @@ app.add_middleware(
 )
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+
+class SynthesizeRequest(BaseModel):
+        text: str
 
 def verify_password(plain_password, hashed_password):
     return pwd_context.verify(plain_password, hashed_password)
@@ -136,7 +143,7 @@ def read_root():
 @app.post("/upload")
 async def upload_file(file: UploadFile = File(...), current_user: User = Depends(get_current_user)):
     try:
-        uploads_dir = os.path.join(os.getcwd() + '/backend/', "uploads")
+        uploads_dir = os.path.join(os.getcwd() + '\\backend\\', "uploads")
         os.makedirs(uploads_dir, exist_ok=True)
 
         file_extension = file.filename.split(".")[-1]
@@ -146,6 +153,64 @@ async def upload_file(file: UploadFile = File(...), current_user: User = Depends
 
         with open(file_path, "wb") as buffer:
             shutil.copyfileobj(file.file, buffer)
+
+        sanitize_wav(file_path)
+
         return {"message": "File uploaded successfully", "file_path": file_path}
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+def sanitize_wav(input_path, output_path=None, target_rate=24000):
+    if output_path is None:
+        output_path = input_path
+    try:
+        data, samplerate = sf.read(input_path)
+
+        # Convert to mono
+        if len(data.shape) == 2:
+            data = data.mean(axis=1)
+
+        # Resample if needed
+        if samplerate != target_rate:
+            import librosa
+            data = librosa.resample(data, orig_sr=samplerate, target_sr=target_rate)
+
+        temp_output_path = output_path
+        sf.write(temp_output_path, data, target_rate, subtype='PCM_16')
+
+        os.replace(temp_output_path, output_path)
+        print(f"Saved clean PCM WAV to {output_path}")
+    except Exception as e:
+        print(f"Error: {e}")
+
+@app.post("/synthesize")
+async def synthesize(request: SynthesizeRequest, current_user: User = Depends(get_current_user)):
+    # Initialize TTS model
+    tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2")
+
+    uploads_dir = os.path.join(os.getcwd() + '\\backend\\', "uploads")
+
+    reference_audio_path = None
+    for ext in [".wav", ".mp3"]:
+        path = os.path.join(uploads_dir, f"{current_user.username}{ext}")
+        if os.path.exists(path):
+            reference_audio_path = path
+            break
+
+    if not reference_audio_path:
+        raise HTTPException(status_code=404,
+                            detail="Voice sample not found. Please upload a voice sample first.")
+
+    output_dir = os.path.join(os.getcwd() + '/backend/', "generated")
+    os.makedirs(output_dir, exist_ok=True)
+    output_filename = f"{current_user.username}_synthesis_{datetime.now().strftime('%Y%m%d%H%M%S')}.wav"
+    output_path = os.path.join(output_dir, output_filename)
+
+    tts.tts_to_file(
+        text=request.text,
+        speaker_wav=reference_audio_path,
+        language="en",
+        file_path=output_path
+    )
+
+    return FileResponse(output_path, media_type="audio/wav", filename=output_filename)

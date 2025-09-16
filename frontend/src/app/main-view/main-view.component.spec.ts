@@ -2,6 +2,7 @@ import { TestBed } from '@angular/core/testing';
 import { HttpClient } from '@angular/common/http';
 import { MainViewComponent } from './main-view.component';
 import { Auth } from '../auth/auth.service';
+import { of } from 'rxjs';
 
 class MockAuth {
   getToken() {
@@ -15,6 +16,7 @@ class MockAuth {
 describe('MainViewComponent', () => {
   let component: MainViewComponent;
   let mediaRecorderInstance: any;
+  let httpClient: HttpClient;
 
   beforeEach(() => {
     mediaRecorderInstance = {
@@ -28,14 +30,20 @@ describe('MainViewComponent', () => {
     spyOn(navigator.mediaDevices, 'getUserMedia').and.resolveTo({} as MediaStream);
 
     TestBed.configureTestingModule({
-  imports: [MainViewComponent],
+      imports: [MainViewComponent],
       providers: [
-  { provide: Auth, useClass: MockAuth },
-  { provide: HttpClient, useValue: {} }
+        { provide: Auth, useClass: MockAuth },
+        { 
+          provide: HttpClient, 
+          useValue: {
+            post: () => of(new Blob())
+          } 
+        }
       ]
     });
     const fixture = TestBed.createComponent(MainViewComponent);
     component = fixture.componentInstance;
+    httpClient = TestBed.inject(HttpClient);
     fixture.detectChanges();
   });
 
@@ -126,4 +134,19 @@ describe('MainViewComponent', () => {
     expect(component.fileName).toBeNull();
   });
 
+  it('should call http.post and set synthesizedAudioUrl on onSynthesize', () => {
+    const postSpy = spyOn(httpClient, 'post').and.returnValue(of(new Blob()));
+    spyOn(URL, 'createObjectURL').and.returnValue('blob:http://localhost:4200/synthesized-url');
+    
+    component.textToSpeechControl.setValue('Hello world');
+    component.onSynthesize();
+
+    expect(postSpy).toHaveBeenCalledWith('http://localhost:8000/synthesize', { text: 'Hello world' }, {
+      headers: {
+        Authorization: 'Bearer test-token'
+      },
+      responseType: 'blob'
+    });
+    expect(component.synthesizedAudioUrl()).toBe('blob:http://localhost:4200/synthesized-url' as any);
+  });
 });

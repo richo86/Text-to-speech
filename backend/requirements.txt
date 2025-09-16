@@ -6,3 +6,8 @@ python-multipart
 pydantic
 pytest
 httpx
+coqui-tts
+librosa
+soundfile
+audioread
+pydub

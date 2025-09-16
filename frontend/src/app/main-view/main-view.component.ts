@@ -11,6 +11,7 @@ import { HttpClient } from '@angular/common/http';
 import { Auth } from '../auth/auth.service';
 import { Router } from '@angular/router';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
+import { FormControl, FormsModule, ReactiveFormsModule } from '@angular/forms';
 
 @Component({
   selector: 'app-main-view',
@@ -23,7 +24,9 @@ import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
     MatFormFieldModule,
     MatIconModule,
     MatDividerModule,
-    MatProgressSpinnerModule
+    MatProgressSpinnerModule,
+    FormsModule,
+    ReactiveFormsModule
   ],
   templateUrl: './main-view.component.html',
   styleUrls: ['./main-view.component.css']
@@ -39,6 +42,11 @@ export class MainViewComponent {
   isStopDisabled = signal(false);
   recordedUrl = signal<SafeUrl | null>(null);
   isRecordingFinished = signal(false);
+  textToSpeechControl = new FormControl('');
+  synthesizedAudioUrl = signal<SafeUrl | null>(null);
+  isSynthesizing = signal(false);
+  synthesizeError = signal<string | null>(null);
+  uploadError = signal<string | null>(null);
   private readonly http = inject(HttpClient);
   private readonly authService = inject(Auth);
   private readonly router = inject(Router);
@@ -49,6 +57,7 @@ export class MainViewComponent {
   constructor(private readonly cdRef: ChangeDetectorRef) {}
 
   onFileSelected(event: Event): void {
+    this.uploadError.set(null);
     const input = event.target as HTMLInputElement;
     if (input.files && input.files.length > 0) {
       const file = input.files[0];
@@ -57,7 +66,7 @@ export class MainViewComponent {
         this.fileName = file.name;
         this.uploadFile(file);
       } else {
-        console.error('Invalid file type. Please upload a WAV or MP3 file.');
+        this.uploadError.set('Invalid file type. Please upload a WAV or MP3 file.');
       }
     }
   }
@@ -83,6 +92,7 @@ export class MainViewComponent {
       },
       error: (error) => {
         console.error('Error uploading file', error);
+        this.uploadError.set(error?.error?.detail || 'An error occurred while uploading the file.');
       }
     });
   }
@@ -99,6 +109,7 @@ export class MainViewComponent {
   }
 
   startRecording(): void {
+    this.uploadError.set(null);
     navigator.mediaDevices.getUserMedia({ audio: true })
       .then(stream => {
         this.mediaRecorder = new MediaRecorder(stream);
@@ -114,14 +125,15 @@ export class MainViewComponent {
           audioChunks.push(event.data);
         };
 
-        this.mediaRecorder.onstop = () => {
-          this.recordedBlob = new Blob(audioChunks, { type: 'audio/wav' });
+        this.mediaRecorder.onstop = async () => {
+          const recordedBlob = new Blob(audioChunks, { type: this.mediaRecorder?.mimeType || 'audio/webm' });
+          const wavBlob = await this.encodeToWav(recordedBlob);
+          this.recordedBlob = wavBlob;
           const url = URL.createObjectURL(this.recordedBlob);
           this.recordedUrl.set(this.sanitizer.bypassSecurityTrustUrl(url));
           this.isRecordingFinished.set(true);
           this.fileName = this.authService.getUser() + '.wav';
           this.cdRef.detectChanges();
-          console.log("recording has been stopped");
         };
 
         setTimeout(() => {
@@ -130,6 +142,7 @@ export class MainViewComponent {
       })
       .catch(err => {
         console.error('Error getting user media', err);
+        this.uploadError.set('Could not access microphone. Please check permissions.');
       });
   }
 
@@ -154,5 +167,135 @@ export class MainViewComponent {
     this.recordedUrl.set(null);
     this.isRecordingFinished.set(false);
     this.fileName = null;
+  }
+
+  onSynthesize(): void {
+    const text = this.textToSpeechControl.value;
+    if (!text) {
+      return;
+    }
+
+    const token = this.authService.getToken();
+    if (!token) {
+      this.router.navigate(['/login']);
+      return;
+    }
+
+    this.isSynthesizing.set(true);
+    this.synthesizedAudioUrl.set(null);
+    this.synthesizeError.set(null);
+
+    this.http.post('http://localhost:8000/synthesize', { text }, {
+      headers: {
+        Authorization: `Bearer ${token}`
+      },
+      responseType: 'blob'
+    }).subscribe({
+      next: (blob) => {
+        const url = URL.createObjectURL(blob);
+        this.synthesizedAudioUrl.set(this.sanitizer.bypassSecurityTrustUrl(url));
+        this.isSynthesizing.set(false);
+      },
+      error: async (error) => {
+        console.error('Error synthesizing speech', error);
+        const errorText = await this.parseErrorBlob(error.error);
+        this.synthesizeError.set(errorText || 'An error occurred while synthesizing speech.');
+        this.isSynthesizing.set(false);
+      }
+    });
+  }
+
+  private parseErrorBlob(blob: Blob): Promise<string | null> {
+    return new Promise((resolve) => {
+      if (blob.type === 'application/json') {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const result = JSON.parse(reader.result as string);
+            resolve(result.detail || null);
+          } catch (e) {
+            resolve(null);
+          }
+        };
+        reader.onerror = () => {
+          resolve(null);
+        };
+        reader.readAsText(blob);
+      } else {
+        resolve(null);
+      }
+    });
+  }
+
+  private async encodeToWav(blob: Blob): Promise<Blob> {
+    const audioContext = new AudioContext();
+    const arrayBuffer = await blob.arrayBuffer();
+    const audioBuffer = await audioContext.decodeAudioData(arrayBuffer);
+    return this.createWavBlob(audioBuffer);
+  }
+
+  private createWavBlob(audioBuffer: AudioBuffer): Blob {
+    const numOfChan = audioBuffer.numberOfChannels;
+    const length = audioBuffer.length * numOfChan * 2 + 44;
+    const buffer = new ArrayBuffer(length);
+    const view = new DataView(buffer);
+    const channels = [];
+    let i, sample;
+    let offset = 0;
+    let pos = 0;
+
+    // write WAVE header
+    this.setUint32(view, pos, 0x46464952); // "RIFF"
+    pos += 4;
+    this.setUint32(view, pos, length - 8); // file length - 8
+    pos += 4;
+    this.setUint32(view, pos, 0x45564157); // "WAVE"
+    pos += 4;
+    this.setUint32(view, pos, 0x20746d66); // "fmt " chunk
+    pos += 4;
+    this.setUint32(view, pos, 16); // length of format data
+    pos += 4;
+    this.setUint16(view, pos, 1); // format type 1 (PCM)
+    pos += 2;
+    this.setUint16(view, pos, numOfChan);
+    pos += 2;
+    this.setUint32(view, pos, audioBuffer.sampleRate);
+    pos += 4;
+    this.setUint32(view, pos, audioBuffer.sampleRate * 2 * numOfChan); // byte rate
+    pos += 4;
+    this.setUint16(view, pos, numOfChan * 2); // block align
+    pos += 2;
+    this.setUint16(view, pos, 16); // bits per sample
+    pos += 2;
+    this.setUint32(view, pos, 0x61746164); // "data" chunk
+    pos += 4;
+    this.setUint32(view, pos, length - pos - 4); // data length
+    pos += 4;
+
+    // write interleaved PCM data
+    for (i = 0; i < audioBuffer.numberOfChannels; i++) {
+      channels.push(audioBuffer.getChannelData(i));
+    }
+
+    offset = 0;
+    while (pos < length) {
+      for (i = 0; i < numOfChan; i++) {
+        sample = Math.max(-1, Math.min(1, channels[i][offset])); // clamp
+        sample = (0.5 + sample < 0 ? sample * 32768 : sample * 32767) | 0; // scale to 16-bit signed int
+        view.setInt16(pos, sample, true);
+        pos += 2;
+      }
+      offset++;
+    }
+
+    return new Blob([view], { type: 'audio/wav' });
+  }
+
+  private setUint16(view: DataView, offset: number, value: number) {
+    view.setUint16(offset, value, true);
+  }
+
+  private setUint32(view: DataView, offset: number, value: number): void {
+    view.setUint32(offset, value, true);
   }
 }

@@ -19,6 +19,11 @@
           </button>
           <input hidden (change)="onFileSelected($event)" #fileInput type="file" accept="audio/*">
         </div>
+        @if(uploadError()){
+          <div class="error-message mt-4 text-red-600">
+            {{ uploadError() }}
+          </div>
+        }
       </mat-card-content>
     </mat-card>
 
@@ -78,8 +83,27 @@
   <div class="text-to-speech">
     <h2 class="text-xl mb-5 mt-10">Text to Speech</h2>
     <mat-form-field class="full-width">
-      <textarea matInput placeholder="Type here..." ></textarea>
+      <textarea matInput placeholder="Type here..." [formControl]="textToSpeechControl"></textarea>
     </mat-form-field>
-    <button mat-raised-button color="primary" [disabled]="!isAudioAvailable">Read it for me</button>
+    <button mat-raised-button color="primary" [disabled]="!isAudioAvailable || isSynthesizing()" (click)="onSynthesize()">
+      @if (isSynthesizing()) {
+        <mat-spinner diameter="20"></mat-spinner>
+      } @else {
+        Read it for me
+      }
+    </button>
+
+    @if(synthesizeError()){
+      <div class="error-message mt-4 text-red-600">
+        {{ synthesizeError() }}
+      </div>
+    }
+
+    @if(synthesizedAudioUrl() && !isSynthesizing()){
+      <div class="synthesized-audio mt-6 mb-9">
+        <h3 class="text-lg mb-6">Generated Audio:</h3>
+        <audio [src]="synthesizedAudioUrl()" controls></audio>
+      </div>
+    }
   </div>
 </div>
